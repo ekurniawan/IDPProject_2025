@@ -66,13 +66,22 @@ namespace IDPServer.Controllers
                 }
                 List<Claim> claims = new List<Claim>();
                 claims.Add(new Claim(ClaimTypes.Name, loginDTO.Username));
+                var roles = await _accountIDP.GetRolesFromUser(loginDTO.Username);
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+                claims.Add(new Claim("menu", "employee_read"));
+                claims.Add(new Claim("menu", "employee_write"));
+                claims.Add(new Claim("menu", "employee_delete"));
+                claims.Add(new Claim("menu", "employee_read_all"));
 
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    Expires = DateTime.UtcNow.AddMinutes(10),
+                    Expires = DateTime.UtcNow.AddMinutes(30),
                     SigningCredentials = new SigningCredentials(
                         new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -91,6 +100,7 @@ namespace IDPServer.Controllers
             }
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost("addrole")]
         public async Task<IActionResult> AddRole([FromBody] string roleName)
         {
