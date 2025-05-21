@@ -5,14 +5,41 @@ namespace IDPServer.DAL
     public class AccountDAL : IAccountIDP
     {
         private readonly UserManager<IdentityUser> _userManager;
-        public AccountDAL(UserManager<IdentityUser> userManager)
+        private readonly RoleManager<IdentityRole> _roleManager;
+
+        public AccountDAL(UserManager<IdentityUser> userManager,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
-        public Task AddRole(string roleName)
+        public async Task AddRole(string roleName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var roleExist = await _roleManager.RoleExistsAsync(roleName);
+                if (!roleExist)
+                {
+                    var role = new IdentityRole
+                    {
+                        Name = roleName
+                    };
+                    var result = await _roleManager.CreateAsync(role);
+                    if (!result.Succeeded)
+                    {
+                        throw new ArgumentException("Role creation failed");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Role already exists");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException(ex.Message);
+            }
         }
 
         public Task AddRolesToUser(string username, List<string> roleNames)
@@ -20,9 +47,30 @@ namespace IDPServer.DAL
             throw new NotImplementedException();
         }
 
-        public Task AddUserToRole(string username, string roleName)
+        public async Task AddUserToRole(string username, string roleName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                {
+                    throw new ArgumentException("User not found");
+                }
+                var roleExist = await _roleManager.RoleExistsAsync(roleName);
+                if (!roleExist)
+                {
+                    throw new ArgumentException("Role does not exist");
+                }
+                var result = await _userManager.AddToRoleAsync(user, roleName);
+                if (!result.Succeeded)
+                {
+                    throw new ArgumentException("User assignment to role failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
         public Task DeleteRole(string roleName)
@@ -50,14 +98,39 @@ namespace IDPServer.DAL
             throw new NotImplementedException();
         }
 
-        public Task<bool> Login(string username, string password)
+        public async Task<bool> Login(string username, string password)
         {
-            throw new NotImplementedException();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                throw new ArgumentException("User not found");
+            }
+            var result = await _userManager.CheckPasswordAsync(user, password);
+            if (!result)
+            {
+                throw new ArgumentException("Invalid password");
+            }
+            return result;
         }
 
-        public Task<IdentityUser> Register(IdentityUser user, string password)
+        public async Task<IdentityUser> Register(IdentityUser user, string password)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var result = await _userManager.CreateAsync(user, password);
+                if (result.Succeeded)
+                {
+                    return user;
+                }
+                else
+                {
+                    throw new ArgumentException("User registration failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }
