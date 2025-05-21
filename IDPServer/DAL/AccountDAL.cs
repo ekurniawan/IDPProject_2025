@@ -42,9 +42,28 @@ namespace IDPServer.DAL
             }
         }
 
-        public Task AddRolesToUser(string username, List<string> roleNames)
+        public async Task AddRolesToUser(string username, List<string> roleNames)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var user = await _userManager.FindByNameAsync(username);
+                if (user != null)
+                {
+                    var result = await _userManager.AddToRolesAsync(user, roleNames);
+                    if (!result.Succeeded)
+                    {
+                        throw new ArgumentException("User assignment to roles failed");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("User not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
         public async Task AddUserToRole(string username, string roleName)
@@ -73,24 +92,55 @@ namespace IDPServer.DAL
             }
         }
 
-        public Task DeleteRole(string roleName)
+        public async Task DeleteRole(string roleName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var role = await _roleManager.FindByNameAsync(roleName);
+                if (role != null)
+                {
+                    var result = await _roleManager.DeleteAsync(role);
+                    if (!result.Succeeded)
+                    {
+                        throw new ArgumentException("Role deletion failed");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
-        public Task<IdentityRole> GetRole(string roleName)
+        public async Task<IdentityRole> GetRole(string roleName)
         {
-            throw new NotImplementedException();
+            var role = await _roleManager.FindByNameAsync(roleName);
+            if (role == null)
+            {
+                throw new ArgumentException("Role not found");
+            }
+            return role;
         }
 
-        public Task<IEnumerable<string>> GetRolesFromUser(string username)
+        public async Task<IEnumerable<string>> GetRolesFromUser(string username)
         {
-            throw new NotImplementedException();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                throw new ArgumentException("User not found");
+            }
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles;
         }
 
-        public Task<IdentityUser> GetUser(string username)
+        public async Task<IdentityUser> GetUser(string username)
         {
-            throw new NotImplementedException();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                throw new ArgumentException("User not found");
+            }
+            return user;
         }
 
         public Task<IdentityUser> GetUserById(string id)

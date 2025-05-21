@@ -90,5 +90,100 @@ namespace IDPServer.Controllers
                 return BadRequest($"Invalid credentials: {ex.Message}");
             }
         }
+
+        [HttpPost("addrole")]
+        public async Task<IActionResult> AddRole([FromBody] string roleName)
+        {
+            try
+            {
+                await _accountIDP.AddRole(roleName);
+                return Ok($"Role {roleName} created successfully");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("addusertorole")]
+        public async Task<IActionResult> AddUserToRole(string username, string roleName)
+        {
+            try
+            {
+                await _accountIDP.AddUserToRole(username, roleName);
+                return Ok($"User {username} added to role {roleName}");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("getrolesfromuser")]
+        public async Task<IActionResult> GetRolesFromUser(string username)
+        {
+            try
+            {
+                var roles = await _accountIDP.GetRolesFromUser(username);
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("addroletouser")]
+        public async Task<IActionResult> AddRolesToUser(string username, List<string> roleNames)
+        {
+            try
+            {
+                await _accountIDP.AddRolesToUser(username, roleNames);
+                return Ok($"Roles added to user {username}");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("getuser")]
+        public async Task<IActionResult> GetUser(string username)
+        {
+            try
+            {
+                var user = await _accountIDP.GetUser(username);
+                if (user == null)
+                {
+                    return NotFound("User not found");
+                }
+                var userDto = new AccountRegisterDTO
+                {
+                    Username = user.UserName,
+                    Email = user.Email
+                };
+                return Ok(userDto);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("deleteuser")]
+        public async Task<IActionResult> DeleteRole(string roleName)
+        {
+            try
+            {
+                await _accountIDP.DeleteRole(roleName);
+                return Ok($"Role {roleName} deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
     }
 }
